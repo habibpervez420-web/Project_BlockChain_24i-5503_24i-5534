@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monster Battle Game — Web3 Edition</title>
+
+    <!-- Retro GBA Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>MONSTER BATTLE</h1>
+
+    <main class="game-container">
+
+        <!-- WEB3 WALLET & ECONOMY BAR -->
+        <header class="web3-bar">
+            <div class="web3-left">
+                <span id="netBadge" class="net-badge">OFFLINE</span>
+                <span id="recordText" class="record-text">SCORE: 0W - 0L</span>
+            </div>
+            <div class="web3-balances">
+                <span>YOU: <strong id="playerPokeText">0</strong> POKE</span>
+                <span>HOUSE: <strong id="housePokeText">0</strong> POKE</span>
+            </div>
+            <button id="connectBtn" class="small-btn primary-btn">CONNECT WALLET</button>
+        </header>
+
+        <!-- HOME SCREEN / LOBBY -->
+        <section id="home-screen" class="home-screen">
+            <div class="home-content">
+                <h2>WILD ARENA</h2>
+                <p id="lobbyStatusText">Connect MetaMask (Ganache) to claim starter POKE and stake 50 POKE to battle!</p>
+
+                <div class="home-preview">
+                    <div class="preview-card">
+                        <img src="../assets/player.png" alt="Pikachu">
+                        <span>YOU: PIKACHU</span>
+                    </div>
+                    <span class="vs-badge">VS</span>
+                    <div class="preview-card">
+                        <img src="../assets/opponent.png" alt="Plankton">
+                        <span>FOE: PLANKTON</span>
+                    </div>
+                </div>
+
+                <!-- On-Chain Stake & Claim Controls -->
+                <div class="web3-lobby-actions">
+                    <button id="claimBtn" class="secondary-btn" disabled>CLAIM 100 POKE</button>
+                    <button id="lockStakeBtn" class="primary-btn" disabled>LOCK 50 POKE TO FIGHT</button>
+                </div>
+
+                <!-- Optional POKE Token Transfer Bar -->
+                <div class="transfer-box">
+                    <input type="text" id="toAddr" placeholder="Recipient 0x Address...">
+                    <input type="number" id="pokeAmt" placeholder="POKE" min="1">
+                    <button id="sendPokeBtn" class="small-btn" disabled>SEND POKE</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="game-screen" class="hidden">
+
+            <!-- Top Utility Bar -->
+            <header class="top-bar">
+                <span class="turn-indicator" id="turn-indicator">YOUR TURN</span>
+                <div class="top-bar-actions">
+                    <button id="pause-btn" class="small-btn">PAUSE</button>
+                    <button id="quick-restart-btn" class="small-btn danger-btn">RESTART</button>
+                </div>
+            </header>
+
+            <!-- Battle Arena (Phaser Canvas + Overlaid HUD Panels) -->
+            <section class="battle-arena">
+
+                <!-- Opponent HUD (Top-Left, facing Plankton at Top-Right) -->
+                <div class="opponent-section">
+                    <div class="status-box">
+                        <h3 id="opponent-name">Plankton</h3>
+                        <p>
+                            HP: <span id="opponent-hp">100</span>/100
+                        </p>
+                        <div class="hp-bar">
+                            <div id="opponent-health"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phaser Renders Background & Animated Sprites Here -->
+                <div id="phaser-arena"></div>
+
+                <!-- Player HUD (Bottom-Right, next to Pikachu at Bottom-Left) -->
+                <div class="player-section">
+                    <div class="status-box">
+                        <h3 id="player-name">Pikachu</h3>
+                        <p>
+                            HP: <span id="player-hp">100</span>/100
+                        </p>
+                        <div class="hp-bar">
+                            <div id="player-health"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pause Overlay -->
+                <div id="pause-overlay" class="overlay hidden">
+                    <div class="overlay-box">
+                        <h2>GAME PAUSED</h2>
+                        <div class="overlay-buttons">
+                            <button id="resume-btn">RESUME</button>
+                            <button id="pause-restart-btn">RESTART</button>
+                            <button id="pause-home-btn" class="secondary-btn">HOME</button>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Battle Controls -->
+            <section class="battle-controls">
+
+                <div class="dialogue-box" id="dialogue">
+                    A wild Plankton appeared! What will you do?
+                </div>
+
+                <!-- Main Buttons -->
+                <div class="menu-buttons">
+                    <button id="fight-btn">FIGHT</button>
+                    <button id="bag-btn">BAG (2)</button>
+                    <button id="creatures-btn">CREATURES</button>
+                    <button id="run-btn">RUN</button>
+                </div>
+
+                <!-- Attack Menu -->
+                <div id="attack-menu" class="attack-menu hidden">
+                    <button class="attack-btn" data-attack="0">Quick Strike</button>
+                    <button class="attack-btn" data-attack="1">Power Blast</button>
+                    <button class="attack-btn" data-attack="2">Super Attack</button>
+                    <button id="back-btn" class="secondary-btn">BACK</button>
+                </div>
+
+                <!-- End-of-Game Result Menu -->
+                <div id="result-menu" class="hidden">
+                    <h2 id="result-message"></h2>
+                    <div class="result-actions">
+                        <button id="restart-btn">STAKE & PLAY AGAIN</button>
+                        <button id="result-home-btn" class="secondary-btn">GO TO HOME</button>
+                    </div>
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+    <!-- Ethers.js v6 (Blockchain / MetaMask) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+
+    <!-- Phaser 3 Framework -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+    <!-- Single Combined Game + Blockchain Script -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
